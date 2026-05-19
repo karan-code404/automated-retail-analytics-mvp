@@ -99,6 +99,54 @@ if uploaded_file is not None:
         worst_product = profit_by_product.sort_values(by='Profit', ascending=True).iloc[0]['Product']
         st.write(f"**Data Insight:** **{worst_product}** is generating the lowest profit.")
         st.write("**Action:** Apply a heavy discount (20-30%) to clear this stock and free up valuable warehouse space.")
+
+        st.markdown("---")
+    st.header("🌍 Location-Wise Analysis")
+    
+    # 5. Location Filter
+    locations = df['Location'].unique()
+    selected_location = st.selectbox("Select a Location to view product sales:", locations)
+    
+    # Filter data based on location
+    location_data = df[df['Location'] == selected_location]
+    
+    # Bar chart for location-wise sales
+    fig_location = px.bar(location_data, x='Product', y='Sales_Amount', 
+                          title=f"Sales Volume in {selected_location}",
+                          color='Sales_Amount', color_continuous_scale='Viridis')
+    st.plotly_chart(fig_location, use_container_width=True)
+    
+    st.markdown("---")
+    st.header("📥 Download Analysis Report")
+    st.write("Get a summary of product profits and our smart AI recommendations.")
+    
+    # 6. Report Download Button (CSV format)
+    # Ek summary table banana jisme recommendations bhi hon
+    summary_df = profit_by_product.copy()
+    
+    # Simple logic to add recommendations in the report
+    def get_recommendation(product_name):
+        if product_name == best_product:
+            return "High Demand - Give 5-10% Discount (Volume Boost)"
+        elif product_name == worst_product:
+            return "Dead Stock - Give 20-30% Clearance Discount"
+        else:
+            return "Normal Sales - Maintain Stock"
+            
+    summary_df['Smart_Recommendation'] = summary_df['Product'].apply(get_recommendation)
+    
+    # Convert dataframe to CSV
+    csv_data = summary_df.to_csv(index=False).encode('utf-8')
+    
+    st.download_button(
+        label="Download Summary Report (CSV)",
+        data=csv_data,
+        file_name='retail_analysis_report.csv',
+        mime='text/csv',
+    )
+    
+    st.balloons() # Success celebration animation!
+    st.success("🎉 Your MVP is fully ready!")
     
 else:
     st.info("Awaiting file upload. Please upload a CSV file to proceed.")
