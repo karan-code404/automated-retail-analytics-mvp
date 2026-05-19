@@ -62,6 +62,43 @@ if uploaded_file is not None:
     
     # Streamlit mein chart display karna
     st.plotly_chart(fig_profit, use_container_width=True)
+
+    # --- YAHAN SE NAYA CODE ADD KARNA HAI ---
+    
+    st.markdown("---")
+    st.header("📈 Sales Trend Analysis")
+    
+    # 3. Time-Series Chart (Sales over time)
+    # Date column ko sahi format mein laana
+    df['Date'] = pd.to_datetime(df['Date'])
+    sales_trend = df.groupby('Date')['Sales_Amount'].sum().reset_index()
+    
+    # Line Chart banana
+    fig_trend = px.line(sales_trend, x='Date', y='Sales_Amount', 
+                        title="Overall Sales Trend Over Time", 
+                        markers=True, line_shape="spline")
+    
+    st.plotly_chart(fig_trend, use_container_width=True)
+    
+    st.markdown("---")
+    st.header("💡 Smart Business Recommendations")
+    
+    # 4. Actionable Insights (Tumhara Business Logic)
+    col_rec1, col_rec2 = st.columns(2)
+    
+    with col_rec1:
+        st.info("🔥 **High Demand Strategy (Volume Boost)**")
+        # Sabse zyada profit dene wala product nikalna
+        best_product = profit_by_product.sort_values(by='Profit', ascending=False).iloc[0]['Product']
+        st.write(f"**Data Insight:** **{best_product}** is your top-performing product!")
+        st.write("**Action:** Consider offering a 5-10% promotional discount to maximize sales volume and beat competitors.")
+        
+    with col_rec2:
+        st.warning("⚠️ **Dead Stock Strategy (Clearance)**")
+        # Sabse kam profit dene wala product nikalna
+        worst_product = profit_by_product.sort_values(by='Profit', ascending=True).iloc[0]['Product']
+        st.write(f"**Data Insight:** **{worst_product}** is generating the lowest profit.")
+        st.write("**Action:** Apply a heavy discount (20-30%) to clear this stock and free up valuable warehouse space.")
     
 else:
     st.info("Awaiting file upload. Please upload a CSV file to proceed.")
