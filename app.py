@@ -1,152 +1,387 @@
-import streamlit as st
+import os
 import pandas as pd
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
-# Page configuration
-st.set_page_config(page_title="Retail Analytics App", layout="wide")
+# Import backend modules
+from backend.auth import register_user, login_user, logout_user, verify_token
+from backend.cleaner import audit_dataset, clean_dataset
+from backend.analyzer import detect_business_domain, compile_kpis, calculate_correlations, compile_breakdowns
+from backend.insights import generate_analyst_insights
+from backend.root_cause import perform_root_cause_analysis
+from backend.forecaster import generate_time_forecast
+from backend.recommendations import generate_business_recommendations
+from backend.reporter import generate_pdf_report, generate_docx_report, generate_ppt_report
+from backend.chatbot import answer_dataset_query
 
-# App Title
-st.title("📊 Automated Retail & Sales Analytics Tool")
-st.write("Upload your sales data to generate instant insights and recommendations.")
+app = Flask(__name__)
+CORS(app)
 
-# Step 1: File Uploader Component
-uploaded_file = st.file_uploader("Upload your CSV file here (Ensure standard template format)", type=['csv'])
+# Folders setup
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
+REPORTS_DIR = os.path.join(BASE_DIR, 'reports')
 
-if uploaded_file is not None:
-    # Read the data using Pandas
-    df = pd.read_csv(uploaded_file)
-    
-    st.success("File uploaded successfully!")
-    
-    # Display the raw data
-    st.subheader("Preview of Uploaded Data")
-    st.dataframe(df.head())
-    
-    # Basic Summary
-    st.subheader("Data Summary")
-    st.write(f"**Total Rows:** {df.shape[0]}")
-    st.write(f"**Total Columns:** {df.shape[1]}")
+for folder in [UPLOADS_DIR, REPORTS_DIR]:
+    if not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
 
-    # --- YAHAN SE NAYA CODE ADD KARNA HAI ---
+# Global configuration variables
+ACTIVE_FILE_META = {
+    "name": "No dataset loaded",
+    "path": "",
+    "cleaned": False
+}
+
+def get_active_df():
+    """
+    Helper to read active dataset from disk.
+    """
+    path = os.path.join(UPLOADS_DIR, 'active_dataset.csv')
+    if not os.path.exists(path):
+        return None
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return None
+
+def save_active_df(df):
+    """
+    Helper to write active dataset to disk.
+    """
+    path = os.path.join(UPLOADS_DIR, 'active_dataset.csv')
+    df.to_csv(path, index=False)
+
+# ================= AUTH ENDPOINTS =================
+
+@app.route('/api/auth/register', methods=['POST'])
+def handle_register():
+    data = request.json or {}
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
     
-    # 1. Profit Calculation logic
-    # Profit = (Selling Price - Cost Price) * Sales Amount
-    df['Profit'] = (df['Selling_Price'] - df['Cost_Price']) * df['Sales_Amount']
-    
-    st.markdown("---")
-    st.header("📈 Key Performance Indicators (KPIs)")
-    
-    # Display Top Metrics (Business impact show karne ke liye)
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric(label="Total Items Sold", value=int(df['Sales_Amount'].sum()))
-    with col2:
-        total_revenue = (df['Selling_Price'] * df['Sales_Amount']).sum()
-        st.metric(label="Total Revenue", value=f"₹{int(total_revenue)}")
-    with col3:
-        st.metric(label="Total Profit generated", value=f"₹{int(df['Profit'].sum())}")
+    if not username or not email or not password:
+        return jsonify({"success": False, "error": "Username, email, and password are required."}), 400
         
-    st.markdown("---")
-    st.header("📊 Interactive Visualizations")
-    
-    # 2. Product-wise Profit Chart using Plotly
-    import plotly.express as px
-    
-    # Data ko Product ke hisaab se group karna
-    profit_by_product = df.groupby('Product')['Profit'].sum().reset_index()
-    
-    # Bar Chart banana
-    fig_profit = px.bar(profit_by_product, x='Product', y='Profit', 
-                        title="Total Profit Contribution by Product",
-                        color='Profit', 
-                        color_continuous_scale='Blues')
-    
-    # Streamlit mein chart display karna
-    st.plotly_chart(fig_profit, use_container_width=True)
+    success, msg = register_user(username, email, password)
+    if not success:
+        return jsonify({"success": False, "error": msg}), 400
+    return jsonify({"success": True, "message": msg})
 
-    # --- YAHAN SE NAYA CODE ADD KARNA HAI ---
+@app.route('/api/auth/login', methods=['POST'])
+def handle_login():
+    data = request.json or {}
+    username_or_email = data.get('username_or_email')
+    password = data.get('password')
     
-    st.markdown("---")
-    st.header("📈 Sales Trend Analysis")
-    
-    # 3. Time-Series Chart (Sales over time)
-    # Date column ko sahi format mein laana
-    df['Date'] = pd.to_datetime(df['Date'])
-    sales_trend = df.groupby('Date')['Sales_Amount'].sum().reset_index()
-    
-    # Line Chart banana
-    fig_trend = px.line(sales_trend, x='Date', y='Sales_Amount', 
-                        title="Overall Sales Trend Over Time", 
-                        markers=True, line_shape="spline")
-    
-    st.plotly_chart(fig_trend, use_container_width=True)
-    
-    st.markdown("---")
-    st.header("💡 Smart Business Recommendations")
-    
-    # 4. Actionable Insights (Tumhara Business Logic)
-    col_rec1, col_rec2 = st.columns(2)
-    
-    with col_rec1:
-        st.info("🔥 **High Demand Strategy (Volume Boost)**")
-        # Sabse zyada profit dene wala product nikalna
-        best_product = profit_by_product.sort_values(by='Profit', ascending=False).iloc[0]['Product']
-        st.write(f"**Data Insight:** **{best_product}** is your top-performing product!")
-        st.write("**Action:** Consider offering a 5-10% promotional discount to maximize sales volume and beat competitors.")
+    if not username_or_email or not password:
+        return jsonify({"success": False, "error": "Username/email and password are required."}), 400
         
-    with col_rec2:
-        st.warning("⚠️ **Dead Stock Strategy (Clearance)**")
-        # Sabse kam profit dene wala product nikalna
-        worst_product = profit_by_product.sort_values(by='Profit', ascending=True).iloc[0]['Product']
-        st.write(f"**Data Insight:** **{worst_product}** is generating the lowest profit.")
-        st.write("**Action:** Apply a heavy discount (20-30%) to clear this stock and free up valuable warehouse space.")
+    success, payload = login_user(username_or_email, password)
+    if not success:
+        return jsonify({"success": False, "error": payload}), 401
+    return jsonify({"success": True, **payload})
 
-        st.markdown("---")
-    st.header("🌍 Location-Wise Analysis")
+@app.route('/api/auth/logout', methods=['POST'])
+def handle_logout():
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    if token:
+        logout_user(token)
+    return jsonify({"success": True, "message": "Logged out successfully."})
+
+@app.route('/api/auth/session', methods=['GET'])
+def handle_session():
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    user_session = verify_token(token) if token else None
+    if not user_session:
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+    return jsonify({"success": True, "user": user_session})
+
+# ================= DATASET UPLOAD & CLEANING =================
+
+@app.route('/api/upload', methods=['POST'])
+def handle_upload():
+    # Verify Authorization token
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    if not verify_token(token):
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "No file uploaded."}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "Selected filename is empty."}), 400
+        
+    filename = secure_filename(file.filename)
+    ext = filename.split('.')[-1].lower()
     
-    # 5. Location Filter
-    locations = df['Location'].unique()
-    selected_location = st.selectbox("Select a Location to view product sales:", locations)
+    if ext not in ['csv', 'xlsx', 'xls', 'json']:
+        return jsonify({"success": False, "error": "Unsupported file format. Please upload CSV, Excel, or JSON."}), 400
+        
+    temp_path = os.path.join(UPLOADS_DIR, f"temp_{filename}")
+    file.save(temp_path)
     
-    # Filter data based on location
-    location_data = df[df['Location'] == selected_location]
-    
-    # Bar chart for location-wise sales
-    fig_location = px.bar(location_data, x='Product', y='Sales_Amount', 
-                          title=f"Sales Volume in {selected_location}",
-                          color='Sales_Amount', color_continuous_scale='Viridis')
-    st.plotly_chart(fig_location, use_container_width=True)
-    
-    st.markdown("---")
-    st.header("📥 Download Analysis Report")
-    st.write("Get a summary of product profits and our smart AI recommendations.")
-    
-    # 6. Report Download Button (CSV format)
-    # Ek summary table banana jisme recommendations bhi hon
-    summary_df = profit_by_product.copy()
-    
-    # Simple logic to add recommendations in the report
-    def get_recommendation(product_name):
-        if product_name == best_product:
-            return "High Demand - Give 5-10% Discount (Volume Boost)"
-        elif product_name == worst_product:
-            return "Dead Stock - Give 20-30% Clearance Discount"
+    try:
+        # Load dataset with Pandas
+        if ext == 'csv':
+            df = pd.read_csv(temp_path)
+        elif ext in ['xlsx', 'xls']:
+            df = pd.read_excel(temp_path)
         else:
-            return "Normal Sales - Maintain Stock"
+            df = pd.read_json(temp_path)
             
-    summary_df['Smart_Recommendation'] = summary_df['Product'].apply(get_recommendation)
+        # Standardize and save as internal active_dataset.csv
+        save_active_df(df)
+        
+        ACTIVE_FILE_META["name"] = filename
+        ACTIVE_FILE_META["path"] = temp_path
+        ACTIVE_FILE_META["cleaned"] = False
+        
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            
+        audit = audit_dataset(df)
+        return jsonify({
+            "success": True, 
+            "dataset_name": filename, 
+            "cleaned": False, 
+            "audit": audit
+        })
+        
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        return jsonify({"success": False, "error": f"Failed to parse file: {str(e)}"}), 500
+
+@app.route('/api/clean', methods=['POST'])
+def handle_clean():
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    if not verify_token(token):
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded."}), 400
+        
+    settings = request.json or {}
     
-    # Convert dataframe to CSV
-    csv_data = summary_df.to_csv(index=False).encode('utf-8')
+    try:
+        cleaned_df, clean_report = clean_dataset(df, settings)
+        save_active_df(cleaned_df)
+        ACTIVE_FILE_META["cleaned"] = True
+        
+        audit = audit_dataset(cleaned_df)
+        return jsonify({
+            "success": True,
+            "logs": clean_report["logs"],
+            "report": clean_report,
+            "audit": audit
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Cleaning engine error: {str(e)}"}), 500
+
+# ================= ANALYTICS DASHBOARD =================
+
+@app.route('/api/dashboard', methods=['GET'])
+def handle_dashboard():
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded."}), 400
+        
+    try:
+        domain = detect_business_domain(df)
+        kpis = compile_kpis(df, domain)
+        correlations = calculate_correlations(df)
+        breakdowns = compile_breakdowns(df, domain)
+        
+        return jsonify({
+            "success": True,
+            "domain": domain,
+            "kpis": kpis,
+            "correlations": correlations,
+            **breakdowns
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Analytics engine error: {str(e)}"}), 500
+
+@app.route('/api/insights', methods=['GET'])
+def handle_insights():
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded."}), 400
+        
+    try:
+        domain = detect_business_domain(df)
+        kpis = compile_kpis(df, domain)
+        breakdowns = compile_breakdowns(df, domain)
+        correlations = calculate_correlations(df)
+        
+        insights = generate_analyst_insights(kpis, breakdowns, correlations, domain)
+        hypotheses = perform_root_cause_analysis(df, domain, breakdowns)
+        
+        return jsonify({
+            "success": True,
+            "insights": insights,
+            "hypotheses": hypotheses
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Insights engine error: {str(e)}"}), 500
+
+@app.route('/api/forecast', methods=['GET'])
+def handle_forecast():
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded."}), 400
+        
+    try:
+        domain = detect_business_domain(df)
+        breakdowns = compile_breakdowns(df, domain)
+        forecast = generate_time_forecast(df, breakdowns, domain)
+        
+        return jsonify({
+            "success": True,
+            **forecast
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Forecasting engine error: {str(e)}"}), 500
+
+@app.route('/api/recommendations', methods=['GET'])
+def handle_recommendations():
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded."}), 400
+        
+    try:
+        domain = detect_business_domain(df)
+        kpis = compile_kpis(df, domain)
+        breakdowns = compile_breakdowns(df, domain)
+        hypotheses = perform_root_cause_analysis(df, domain, breakdowns)
+        
+        recs = generate_business_recommendations(df, kpis, hypotheses, domain)
+        return jsonify({
+            "success": True,
+            "recommendations": recs
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Recommendations engine error: {str(e)}"}), 500
+
+# ================= CHATBOT ASSISTANT =================
+
+@app.route('/api/chatbot', methods=['POST'])
+def handle_chatbot():
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    if not verify_token(token):
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+
+    data = request.json or {}
+    message = data.get('message')
+    if not message:
+        return jsonify({"success": False, "error": "Message is required."}), 400
+        
+    df = get_active_df()
+    if df is None:
+        return jsonify({
+            "success": True, 
+            "reply": "I don't have a dataset context loaded yet. Please navigate to the **Upload Dataset** page and upload a file first, so I can analyze it and answer your questions!"
+        })
+        
+    try:
+        audit_results = audit_dataset(df)
+        domain = detect_business_domain(df)
+        kpis = compile_kpis(df, domain)
+        breakdowns = compile_breakdowns(df, domain)
+        correlations = calculate_correlations(df)
+        insights = generate_analyst_insights(kpis, breakdowns, correlations, domain)
+        hypotheses = perform_root_cause_analysis(df, domain, breakdowns)
+        forecast = generate_time_forecast(df, breakdowns, domain)
+        recs = generate_business_recommendations(df, kpis, hypotheses, domain)
+        
+        # Combine breakdowns for chatbot helper
+        audit_results["category_breakdown"] = breakdowns["category_breakdown"]
+        
+        reply = answer_dataset_query(message, audit_results, kpis, insights, hypotheses, recs, forecast, domain)
+        return jsonify({"success": True, "reply": reply})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Chatbot engine error: {str(e)}"}), 500
+
+# ================= REPORT COMPILER EXPORTS =================
+
+@app.route('/api/export', methods=['POST'])
+def handle_export():
+    token = request.headers.get('Authorization')
+    if token and token.startswith('Bearer '):
+        token = token.split(' ')[1]
+    user_session = verify_token(token) if token else None
+    if not user_session:
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+
+    df = get_active_df()
+    if df is None:
+        return jsonify({"success": False, "error": "No dataset loaded to export."}), 400
+        
+    data = request.json or {}
+    file_format = data.get('format', 'pdf').lower()
     
-    st.download_button(
-        label="Download Summary Report (CSV)",
-        data=csv_data,
-        file_name='retail_analysis_report.csv',
-        mime='text/csv',
-    )
-    
-    st.balloons() # Success celebration animation!
-    st.success("🎉 Your MVP is fully ready!")
-    
-else:
-    st.info("Awaiting file upload. Please upload a CSV file to proceed.")
+    if file_format not in ['pdf', 'docx', 'pptx', 'pack']:
+        return jsonify({"success": False, "error": "Unsupported export format. Use pdf, docx, pptx, or pack."}), 400
+        
+    try:
+        domain = detect_business_domain(df)
+        kpis = compile_kpis(df, domain)
+        breakdowns = compile_breakdowns(df, domain)
+        correlations = calculate_correlations(df)
+        insights = generate_analyst_insights(kpis, breakdowns, correlations, domain)
+        hypotheses = perform_root_cause_analysis(df, domain, breakdowns)
+        forecast = generate_time_forecast(df, breakdowns, domain)
+        recs = generate_business_recommendations(df, kpis, hypotheses, domain)
+        
+        dataset_name = ACTIVE_FILE_META.get("name", "dataset.csv")
+        username = user_session.get("username", "Guest User")
+        
+        if file_format == 'pdf':
+            file_path = generate_pdf_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            mime = 'application/pdf'
+        elif file_format == 'docx':
+            file_path = generate_docx_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif file_format == 'pptx':
+            file_path = generate_ppt_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            mime = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        else: # pack
+            pdf_path = generate_pdf_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            docx_path = generate_docx_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            pptx_path = generate_ppt_report(dataset_name, kpis, breakdowns, correlations, insights, hypotheses, recs, forecast, username)
+            
+            import zipfile
+            zip_filename = f"consulting_pack_{dataset_name.split('.')[0]}_{os.getpid()}.zip"
+            zip_path = os.path.join(REPORTS_DIR, zip_filename)
+            
+            with zipfile.ZipFile(zip_path, 'w') as zipf:
+                zipf.write(pdf_path, arcname=os.path.basename(pdf_path))
+                zipf.write(docx_path, arcname=os.path.basename(docx_path))
+                zipf.write(pptx_path, arcname=os.path.basename(pptx_path))
+                
+            mime = 'application/zip'
+            return send_file(zip_path, as_attachment=True, mimetype=mime, download_name=zip_filename)
+            
+        return send_file(file_path, as_attachment=True, mimetype=mime, download_name=os.path.basename(file_path))
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Report exporter error: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)

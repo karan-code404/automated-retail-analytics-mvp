@@ -1,0 +1,9 @@
+{
+  "name": "corporate-analytics-report-generator",
+  "version": "1.0.0",
+  "description": "Root wrapper for Corporate Analytics Report Generator UI and API",
+  "scripts": {
+    "postinstall": "npm install --prefix frontend --legacy-peer-deps",
+    "dev": "npm run dev --prefix frontend"
+  }
+}

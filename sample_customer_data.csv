@@ -1,0 +1,9 @@
+Date,User_Segment,CLTV,Tenure_Months,Churn_Status,Active_Status,NPS_Score
+2023-10-01,Enterprise,45000,32,0,1,9
+2023-10-15,SMB,15000,12,0,1,8
+2023-11-01,Mid-Market,25000,18,0,1,9
+2023-11-15,SMB,14000,8,1,0,5
+2023-12-01,Enterprise,48000,36,0,1,10
+2023-12-15,Mid-Market,24000,14,1,0,7
+2024-01-01,SMB,12000,6,1,0,6
+2024-01-15,Enterprise,52000,42,0,1,9

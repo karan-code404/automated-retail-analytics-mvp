@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #0b0f19; /* Sleek Deep Slate Blue */
+    color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+/* Custom scrollbars for data tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(20, 184, 166, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 184, 166, 0.5);
+}
+
+/* Pulse animation utility */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.3; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ================= LIGHT MODE OVERRIDES ================= */
+
+.light-mode {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+}
+
+.light-mode body {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+}
+
+.light-mode .glass-panel {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+}
+
+.light-mode .glass-card {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(15, 23, 42, 0.05) !important;
+}
+
+.light-mode h2,
+.light-mode h3,
+.light-mode h4,
+.light-mode h5,
+.light-mode .text-white {
+  color: #0f172a !important;
+}
+
+.light-mode .text-slate-400 {
+  color: #475569 !important;
+}
+
+.light-mode .text-slate-300 {
+  color: #334155 !important;
+}
+
+.light-mode .text-slate-500 {
+  color: #64748b !important;
+}
+
+.light-mode .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light-mode .bg-slate-950 {
+  background-color: #f1f5f9 !important;
+}
+
+.light-mode .divide-slate-900 > * + * {
+  border-color: #e2e8f0 !important;
+}
+
+.light-mode .divide-slate-800 > * + * {
+  border-color: #e2e8f0 !important;
+}
+
+.light-mode select {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.light-mode input {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.light-mode select option {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+}

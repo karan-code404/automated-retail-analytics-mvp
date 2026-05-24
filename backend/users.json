@@ -1,0 +1,74 @@
+[
+  {
+    "id": "bad98f761de42736",
+    "username": "karan",
+    "email": "karanthegreat6162@gmail.com",
+    "password": "fa445605850b50e766d20d9c875b414db931ad25b7b29f231da25167d04bc40f"
+  },
+  {
+    "id": "6dd332b5c9581dba",
+    "username": "testuser_1779625142677",
+    "email": "testuser_1779625142677@company.com",
+    "password": "dda69783f28fdf6f1c5a83e8400f2472e9300887d1dffffe12a07b92a3d0aa25"
+  },
+  {
+    "id": "8b5a5eab63f3ace4",
+    "username": "testuser_1779625420710",
+    "email": "testuser_1779625420710@company.com",
+    "password": "dda69783f28fdf6f1c5a83e8400f2472e9300887d1dffffe12a07b92a3d0aa25"
+  },
+  {
+    "id": "060af7a9d58e3036",
+    "username": "test_architect_1779626227284",
+    "email": "test_architect_1779626227284@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "9e5d82c34d8d54fc",
+    "username": "test_architect_1779626245777",
+    "email": "test_architect_1779626245777@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "55ab83a0a92979cf",
+    "username": "test_architect_1779626440996",
+    "email": "test_architect_1779626440996@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "657278c94dd5d223",
+    "username": "test_architect_1779626459555",
+    "email": "test_architect_1779626459555@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "67601a5faeea2c5f",
+    "username": "test_architect_1779626508903",
+    "email": "test_architect_1779626508903@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "7834f07c234d774a",
+    "username": "test_architect_1779637401429",
+    "email": "test_architect_1779637401429@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "fe60dbf3ef3939e4",
+    "username": "test_architect_1779638495333",
+    "email": "test_architect_1779638495333@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "c829930c6ad81a9f",
+    "username": "test_architect_1779638530975",
+    "email": "test_architect_1779638530975@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  },
+  {
+    "id": "2259dca0342d7434",
+    "username": "test_architect_1779640845501",
+    "email": "test_architect_1779640845501@analytics.com",
+    "password": "a64b5b0b55d7c4c34fcb61f43518fb137cbe4c21153cac2f45be0a33b69bcdec"
+  }
+]
