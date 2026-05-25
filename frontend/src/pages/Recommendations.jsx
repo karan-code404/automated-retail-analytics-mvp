@@ -25,7 +25,7 @@ export default function Recommendations({ token, currentDataset }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:5000/api/recommendations', {
+      const response = await axios.get('/api/recommendations', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

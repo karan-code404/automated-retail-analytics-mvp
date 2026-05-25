@@ -38,7 +38,7 @@ export default function Forecasting({ token, currentDataset }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:5000/api/forecast', {
+      const response = await axios.get('/api/forecast', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

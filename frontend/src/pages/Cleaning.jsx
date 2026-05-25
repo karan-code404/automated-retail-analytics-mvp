@@ -29,7 +29,7 @@ export default function Cleaning({ token, currentDataset, onCleanSuccess }) {
     setCleanLogs(null);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/clean', {
+      const response = await axios.post('/api/clean', {
         fill_missing: fillMissing,
         remove_duplicates: removeDuplicates,
         handle_outliers: handleOutliers,

@@ -27,7 +27,7 @@ export default function Insights({ token, currentDataset }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:5000/api/insights', {
+      const response = await axios.get('/api/insights', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

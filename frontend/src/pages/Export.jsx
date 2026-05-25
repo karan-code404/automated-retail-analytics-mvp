@@ -34,7 +34,7 @@ export default function Export({ token, currentDataset }) {
     }, 350);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/export', {
+      const response = await axios.post('/api/export', {
         format: format
       }, {
         headers: {

@@ -48,7 +48,7 @@ export default function Login({ onLoginSuccess }) {
     try {
       if (isRegister) {
         // Register API Request
-        const response = await axios.post('http://localhost:5000/api/auth/register', {
+        const response = await axios.post('/api/auth/register', {
           username,
           email,
           password
@@ -59,7 +59,7 @@ export default function Login({ onLoginSuccess }) {
         setConfirmPassword('');
       } else {
         // Login API Request
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
+        const response = await axios.post('/api/auth/login', {
           username_or_email: email,
           password
         });

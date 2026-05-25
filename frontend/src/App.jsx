@@ -37,7 +37,7 @@ export default function App() {
     
     setIsSessionLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/auth/session', {
+      const response = await axios.get('/api/auth/session', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +65,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/logout', {}, {
+      await axios.post('/api/auth/logout', {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

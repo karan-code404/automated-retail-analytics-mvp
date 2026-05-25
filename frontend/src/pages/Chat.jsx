@@ -41,7 +41,7 @@ export default function Chat({ token, currentDataset }) {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chatbot', {
+      const response = await axios.post('/api/chatbot', {
         message: userMessage
       }, {
         headers: {
