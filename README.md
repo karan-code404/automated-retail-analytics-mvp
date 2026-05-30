@@ -9,19 +9,31 @@ The application is structured into two main layers:
 ```
 /DataAnalytics_project
 ├── backend/                  # Node.js + Express API server
-│   ├── analyzer.py           # Core computation logic using Pandas
-│   ├── server.js             # API router and Multer file upload handler
-│   ├── package.json          # Express dependencies (cors, multer, express)
-│   └── uploads/              # Directory for temp file uploads
+│   ├── uploads/              # Directory for temp file uploads
+│   ├── analyzer.py           # Core calculation engine
+│   ├── auth.py               # Authentication module
+│   ├── chart_generator.py    # Chart creation scripts
+│   ├── chatbot.py            # AI assistant engine
+│   ├── cleaner.py            # Data cleaning pipeline
+│   ├── forecaster.py         # Demand/sales forecasting
+│   ├── insights.py           # Analytics insights generator
+│   ├── recommendations.py    # Recommendation builder
+│   ├── reporter.py           # Report generation suite
+│   ├── root_cause.py         # Diagnostic root cause analysis
+│   ├── server.js             # API router and server entry
+│   ├── test_e2e.js           # End-to-end integration tests
+│   ├── users.json            # Mock user credentials store
+│   └── package.json          # Express dependencies
 ├── frontend/                 # React + Vite + Tailwind CSS UI
 │   ├── src/
-│   │   ├── components/       # Reusable components (FileUploader, Dashboard)
-│   │   ├── App.jsx           # Main coordinator & API bridge state manager
-│   │   ├── index.css         # Tailwind v4 import & custom styles
-│   │   └── main.jsx          # React app entry point
-│   ├── package.json          # React, Recharts, Lucide, Tailwind config
-│   └── vite.config.js        # Vite + Tailwind v4 bundler config
-└── README.md                 # Setup & running instructions (this file)
+│   │   ├── components/       # Reusable UI components (Dashboard, Sidebar, FileUploader)
+│   │   ├── App.jsx           # Application main state and layout coordinator
+│   │   ├── index.css         # Tailwind directives and styles
+│   │   └── main.jsx          # Frontend entry point
+│   ├── package.json          # React and charting packages
+│   └── vite.config.js        # Vite configuration
+├── app.py                    # Root app coordinator
+└── README.md                 # Project guide (this file)
 ```
 
 ## ⚙️ Workflow Mechanics
